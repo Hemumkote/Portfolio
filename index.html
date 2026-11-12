@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hemantha M M — Software Engineer</title>
+    <meta name="description" content="Hemantha M M — Full-stack software engineer building mobile (React Native) and web (Next.js) applications." />
+    <meta name="theme-color" content="#020403" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23020403'/><text x='4' y='23' font-family='monospace' font-size='18' fill='%2300ff9c'>&gt;_</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- BOOT SEQUENCE -->
+    <div id="boot" aria-hidden="true">
+      <pre id="boot-log"></pre>
+      <div class="boot-bar"><span id="boot-progress"></span></div>
+      <div id="boot-hint">[ press any key or click to skip ]</div>
+    </div>
+
+    <canvas id="webgl"></canvas>
+    <div class="crt" aria-hidden="true"></div>
+
+    <!-- HUD -->
+    <header class="hud-top">
+      <a href="#hero" class="prompt"><span class="u">hemantha</span>@<span class="h">portfolio</span>:<span class="p" id="hud-path">~</span>$<span class="blink">_</span></a>
+      <nav id="nav">
+        <a href="#about" data-idx="01">whoami</a>
+        <a href="#skills" data-idx="02">stack</a>
+        <a href="#experience" data-idx="03">log</a>
+        <a href="#projects" data-idx="04">projects</a>
+        <a href="#education" data-idx="05">edu</a>
+        <a href="#contact" data-idx="06">ssh</a>
+      </nav>
+      <button id="theme-btn" title="cycle theme" aria-label="cycle color theme">◐</button>
+    </header>
+
+    <aside class="hud-bottom" aria-hidden="true">
+      <div class="hud-left">
+        <div>SECTOR <b id="hud-sector">00</b> // <span id="hud-name">BOOT</span></div>
+        <div class="scrollbar"><span id="hud-scroll"></span></div>
+        <div>DECRYPTED <b id="hud-pct">000</b>%</div>
+      </div>
+      <div class="hud-right">
+        <div>FPS <b id="hud-fps">--</b> · X <b id="hud-x">000</b> Y <b id="hud-y">000</b></div>
+        <div id="hud-clock">--:--:--</div>
+      </div>
+    </aside>
+
+    <div id="cursor" aria-hidden="true"><span></span></div>
+
+    <main id="content"></main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
