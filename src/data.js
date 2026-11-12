@@ -192,3 +192,34 @@ export const EDUCATION = [
     meta: 'Full-Stack Java Development',
   },
 ];
+
+// Keyboard theme: which physical key carries which technology.
+// `code` is the KeyboardEvent.code, `skill` must match a name in SKILLS,
+// `tag` (optional) is the name used in PROJECTS[].stack when it differs.
+export const KEYCAPS = [
+  { code: 'Space', short: 'React Native', skill: 'React Native' },
+  { code: 'Enter', short: 'FastAPI', skill: 'FastAPI' },
+  { code: 'KeyR', short: 'React', skill: 'React.js' },
+  { code: 'KeyN', short: 'Next', skill: 'Next.js' },
+  { code: 'KeyT', short: 'TS', skill: 'TypeScript' },
+  { code: 'KeyJ', short: 'JS', skill: 'JavaScript ES6+' },
+  { code: 'KeyH', short: 'HTML', skill: 'HTML5 / CSS3' },
+  { code: 'KeyC', short: 'CSS', skill: 'HTML5 / CSS3' },
+  { code: 'KeyI', short: 'iOS', skill: 'iOS / Android' },
+  { code: 'KeyD', short: 'Droid', skill: 'iOS / Android' },
+  { code: 'KeyV', short: 'Nav', skill: 'React Navigation' },
+  { code: 'KeyA', short: 'Axios', skill: 'Axios' },
+  { code: 'KeyF', short: 'Firebase', skill: 'Firebase' },
+  { code: 'KeyX', short: 'Redux', skill: 'Redux' },
+  { code: 'KeyK', short: 'Ctx', skill: 'Context API' },
+  { code: 'KeyL', short: 'TW', skill: 'Tailwind CSS' },
+  { code: 'KeyU', short: 'RWD', skill: 'Responsive Design' },
+  { code: 'KeyP', short: 'PG', skill: 'PostgreSQL' },
+  { code: 'KeyQ', short: 'SQL', skill: 'SQL' },
+  { code: 'KeyE', short: 'REST', skill: 'RESTful APIs', tag: 'REST' },
+  { code: 'KeyW', short: 'WS', skill: 'WebSockets' },
+  { code: 'KeyS', short: 'S.io', skill: 'Socket.io' },
+  { code: 'KeyG', short: 'Git', skill: 'Git' },
+  { code: 'KeyY', short: 'Agile', skill: 'Agile' },
+  { code: 'KeyO', short: 'Ops', skill: 'Deployment Lifecycle' },
+];

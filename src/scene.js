@@ -6,6 +6,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SKILL_CLOUD } from './data.js';
 import { GLYPHS } from './text.js';
+import { KeyboardWorld, DESK } from './keyboard.js';
+import { GlitchWorld, VOID } from './glitch.js';
 
 /* ------------------------------------------------------------------ */
 /* GLSL helpers                                                        */
@@ -81,12 +83,18 @@ export class Scene {
     this.pulse = 0;
     this.glitch = 0;
     this.rainTime = 0;
+    this.mode = 'hacker'; // 'hacker' | 'keys'
+    this.kb = null; // keyboard world, built lazily on first switch
+    this.gw = null; // glitch world, built lazily on first switch
     this.isMobile = window.innerWidth < 820;
     this.colorA = new THREE.Color(THEMES[0].a);
     this.colorB = new THREE.Color(THEMES[0].b);
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setClearColor(0x020403, 1);
+    // shadows are only cast in the keyboard theme (the hacker scene has no shadow casters)
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.dpr = Math.min(window.devicePixelRatio, 1.75);
     this.renderer.setPixelRatio(this.dpr);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -473,7 +481,28 @@ export class Scene {
     this.dust.material.color.copy(this.colorB);
     this.shock.material.color.copy(this.colorA);
     this.labelItems.forEach((l) => l.s.material.color.copy(this.colorA));
+    this.kb?.onTheme();
+    this.gw?.onTheme();
     this.kick(0.8);
+  }
+
+  setMode(mode) {
+    this.mode = ['keys', 'glitch'].includes(mode) ? mode : 'hacker';
+    const keys = this.mode === 'keys';
+    const glitch = this.mode === 'glitch';
+    const hacker = this.mode === 'hacker';
+    if (keys && !this.kb) this.kb = new KeyboardWorld(this);
+    if (glitch && !this.gw) this.gw = new GlitchWorld(this);
+    this.kb?.setVisible(keys);
+    this.gw?.setVisible(glitch);
+    // every theme is its own world: nothing from the hacker scene stays visible elsewhere
+    for (const o of [this.core, this.rain, this.shock, this.ceil, this.floor, this.dust]) o.visible = hacker;
+    for (const c of ['core-hover', 'key-hover', 'g-hover']) document.body.classList.remove(c);
+    const bg = keys ? DESK : glitch ? VOID : 0x020403;
+    this.renderer.setClearColor(bg, 1);
+    this.scene.fog.color.set(bg);
+    this.scene.fog.density = keys ? 0.018 : glitch ? 0.03 : 0.045;
+    if (hacker) this.kick(1.3);
   }
 
   kick(amount = 1) {
@@ -485,8 +514,11 @@ export class Scene {
     this.pointerNDC.copy(this.mouse);
   }
 
-  // returns true if the click hit the core
+  // hacker mode: true if the click hit the core.
+  // keys mode: tech info object for a tech key, true for a plain key, null for a miss.
   click() {
+    if (this.mode === 'keys') return this.kb.click();
+    if (this.mode === 'glitch') { this.gw.burst(); return true; }
     if (this.hover < 0.5) return false;
     this.pulse = 1;
     this.kick(1);
@@ -505,12 +537,14 @@ export class Scene {
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);
     this.crt.uniforms.uRes.value.set(w, h);
+    this.gw?.resize(w, h);
   }
 
   setQuality(dpr) {
     this.dpr = dpr;
     this.renderer.setPixelRatio(dpr);
     this.composer.setPixelRatio(dpr);
+    this.gw?.setPixelRatio(dpr);
     this.coreUniforms.uPR.value = dpr;
     this.rainUniforms.uPR.value = dpr;
     this.resize();
@@ -542,9 +576,43 @@ export class Scene {
     cam.x += this.mouseSmooth.x * 0.45;
     cam.y += this.mouseSmooth.y * 0.3;
 
+    let kbShot = null;
+    if (this.mode === 'keys') {
+      kbShot = this.kb.shot(s, this.isMobile);
+      kbShot.cam.x += this.mouseSmooth.x * 0.8;
+      kbShot.cam.y += this.mouseSmooth.y * 0.5;
+      cam.copy(kbShot.cam);
+      look.copy(kbShot.look);
+    }
+    let gShot = null;
+    if (this.mode === 'glitch') {
+      gShot = this.gw.shot(s, this.isMobile);
+      cam.copy(gShot.cam);
+      cam.x += this.mouseSmooth.x * 0.5;
+      cam.y += this.mouseSmooth.y * 0.3;
+      look.copy(gShot.look);
+    }
+
     this.camera.position.lerp(cam, 0.08);
     this.lookAt.lerp(look, 0.08);
     this.camera.lookAt(this.lookAt);
+
+    if (kbShot) {
+      this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+      this.kb.update(dt, kbShot, !this.blockHover);
+      this.hover = 0;
+      this.glitch = 0;
+      // clean render: no bloom, no CRT, no glitch in the keyboard theme
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+    if (gShot) {
+      this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+      this.gw.update(dt, gShot, !this.blockHover, this.velocity);
+      this.hover = 0;
+      this.gw.render();
+      return;
+    }
 
     this.core.position.lerp(corePos, 0.07);
     const sc = THREE.MathUtils.lerp(this.core.scale.x, coreScale * (1 + this.hover * 0.08), 0.08);

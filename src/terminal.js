@@ -2,7 +2,7 @@ import { PROFILE, CONTACT, SKILLS, EXPERIENCE, PROJECTS, EDUCATION } from './dat
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-export function initTerminal({ onTheme, onMatrix, onGlitch }) {
+export function initTerminal({ onTheme, onMatrix, onGlitch, onMode }) {
   const out = document.getElementById('term-out');
   const input = document.getElementById('term-input');
   const history = [];
@@ -44,6 +44,7 @@ export function initTerminal({ onTheme, onMatrix, onGlitch }) {
           ['resume', 'download resume.pdf'],
           ['goto &lt;section&gt;', 'jump to a section'],
           ['theme [name]', 'matrix | cyber | amber | neon'],
+          ['mode [name]', 'term | glitch | keys'],
           ['matrix', 'toggle overdrive rain'],
           ['clear', 'clear the screen'],
         ].map(([c, d]) => `  <b>${c.padEnd(18, ' ').replace(/ /g, '&nbsp;')}</b><span class="dim">${d}</span>`),
@@ -86,6 +87,10 @@ export function initTerminal({ onTheme, onMatrix, onGlitch }) {
     theme: (arg) => {
       const name = onTheme(arg);
       print(name ? `theme → <span class="acc">${name}</span>` : `theme: unknown '${esc(arg)}'`, name ? '' : 'err');
+    },
+    mode: (arg) => {
+      const m = onMode(arg);
+      print(m ? `mode → <span class="acc">${m === 'hacker' ? 'term' : m}</span>` : `mode: unknown '${esc(arg)}'`, m ? '' : 'err');
     },
     matrix: () => print(onMatrix() ? '<span class="acc">overdrive engaged. wake up...</span>' : 'overdrive disengaged.'),
     clear: () => (queue = queue.then(() => (out.innerHTML = ''))),
