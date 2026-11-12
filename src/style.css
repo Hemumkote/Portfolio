@@ -8,7 +8,7 @@
   --dim: #5f8a76;
   --panel: rgba(2, 10, 7, 0.62);
   --line: color-mix(in srgb, var(--acc) 22%, transparent);
-  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --mono: 'JetBrains Mono', 'Noto Sans Devanagari', ui-monospace, Menlo, monospace;
   --tech: 'Share Tech Mono', var(--mono);
   --gutter: clamp(16px, 5vw, 72px);
 }
@@ -158,6 +158,18 @@ section { min-height: 100vh; padding: 120px var(--gutter) 100px; position: relat
 .scrub .c.off { color: var(--acc); opacity: 0.13; }
 .scrub .c.head { color: #fff; text-shadow: 0 0 10px var(--acc), 0 0 2px var(--acc); opacity: 1; }
 .scrub .c.on { color: var(--fg); opacity: 1; }
+
+/* scrambled glyph cells: real char holds the layout, Devanagari glyph is painted on top */
+.g, .scrub .c.off, .scrub .c.head { position: relative; color: transparent !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; }
+.g::after, .scrub .c.off::after, .scrub .c.head::after {
+  content: attr(data-g);
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-family: 'Noto Sans Devanagari', var(--mono); font-size: 0.82em; line-height: 1;
+  white-space: nowrap; pointer-events: none;
+  color: var(--g-col, var(--acc)); text-shadow: var(--g-sh, none);
+}
+.enc .g::after { --g-col: color-mix(in srgb, var(--acc) 30%, transparent); }
+.scrub .c.head::after { --g-col: #fff; --g-sh: 0 0 10px var(--acc), 0 0 2px var(--acc); }
 
 .glitch { position: relative; display: inline-block; }
 .glitch::before, .glitch::after {

@@ -3,9 +3,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ01<>/\\{}[]#$%&*+=_?!;:アカサタナハマヤラワ';
+export const GLYPHS = 'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह०१२३४५६७८९0123456789';
 const rnd = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
-const scrambleStr = (s) => s.replace(/\S/g, rnd);
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+const esc = (c) => ESC[c] ?? c;
+// A scrambled character keeps the *real* character in the layout (invisible) and paints a
+// random Devanagari glyph over it via ::after. Wider Devanagari glyphs therefore never
+// shift or re-wrap text, which keeps headings stable on narrow mobile screens.
+const cell = (c) => `<span class="g" data-g="${rnd()}">${esc(c)}</span>`;
+const scrambleHTML = (chars, revealed = () => false) =>
+  chars.map((c, i) => (/\s/.test(c) || revealed(i) ? esc(c) : cell(c))).join('');
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 1. DECODE: scramble → resolve once in view ---------- */
@@ -14,7 +21,7 @@ function prepDecode(el) {
   el.dataset.final = text;
   el.setAttribute('aria-label', text);
   if (reduced) return;
-  el.textContent = scrambleStr(text);
+  el.innerHTML = scrambleHTML([...text]);
   el.classList.add('enc');
 }
 
@@ -24,19 +31,15 @@ export function decode(el, { speed = 1 } = {}) {
   el.classList.remove('enc');
   el.classList.add('decoding');
   const dur = Math.min(1400, 350 + text.length * 28) * speed;
-  const reveal = [...text].map((_, i) => (i / text.length) * dur * 0.65 + Math.random() * dur * 0.35);
+  const chars = [...text];
+  const reveal = chars.map((_, i) => (i / chars.length) * dur * 0.65 + Math.random() * dur * 0.35);
   const t0 = performance.now();
   let last = 0;
   const step = (now) => {
     const t = now - t0;
     if (now - last > 40) {
       last = now;
-      let out = '';
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        out += t >= reveal[i] || c === ' ' ? c : rnd();
-      }
-      el.textContent = out;
+      el.innerHTML = scrambleHTML(chars, (i) => t >= reveal[i]);
     }
     if (t < dur) requestAnimationFrame(step);
     else { el.textContent = text; el.classList.remove('decoding'); }
@@ -90,9 +93,9 @@ function prepScrub(el) {
     w.setAttribute('aria-hidden', 'true');
     for (const c of word) {
       const s = document.createElement('span');
-      s.className = 'c off';
-      s.dataset.c = c;
-      s.textContent = reduced ? c : rnd();
+      s.className = reduced ? 'c on' : 'c off';
+      s.textContent = c;
+      s.dataset.g = rnd();
       w.append(s);
       chars.push(s);
     }
@@ -108,9 +111,9 @@ function prepScrub(el) {
     // only touch the span of characters whose state changed (works both scroll directions)
     for (let i = Math.min(prev, n); i < Math.max(prev, n) + st.head && i < chars.length; i++) {
       const s = chars[i];
-      if (i < n) { s.className = 'c on'; s.textContent = s.dataset.c; }
-      else if (i < n + st.head) { s.className = 'c head'; }
-      else { s.className = 'c off'; s.textContent = rnd(); }
+      if (i < n) s.className = 'c on';
+      else if (i < n + st.head) s.className = 'c head';
+      else { s.className = 'c off'; s.dataset.g = rnd(); }
     }
   };
   if (reduced) { chars.forEach((s) => (s.className = 'c on')); return; }
@@ -131,7 +134,7 @@ function shimmer(now) {
     lastShimmer = now;
     for (const st of scrubbers) {
       const start = Math.max(0, st.count);
-      for (let i = start; i < start + st.head && i < st.chars.length; i++) st.chars[i].textContent = rnd();
+      for (let i = start; i < start + st.head && i < st.chars.length; i++) st.chars[i].dataset.g = rnd();
     }
   }
   requestAnimationFrame(shimmer);

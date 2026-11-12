@@ -102,6 +102,8 @@ export class Scene {
     this.raycaster = new THREE.Raycaster();
 
     this.buildAtlas();
+    // redraw the atlas once the Devanagari web font has loaded
+    document.fonts?.load('bold 45px "Noto Sans Devanagari"', 'क').then(() => this.buildAtlas()).catch(() => {});
     this.buildCore();
     this.buildRain();
     this.buildGrid();
@@ -122,7 +124,7 @@ export class Scene {
     g.fillStyle = '#000';
     g.fillRect(0, 0, c.width, c.height);
     g.fillStyle = '#fff';
-    g.font = `bold ${S * 0.78}px "JetBrains Mono", "MS Gothic", monospace`;
+    g.font = `bold ${S * 0.7}px "Noto Sans Devanagari", "JetBrains Mono", sans-serif`;
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     const chars = [...GLYPHS];
@@ -131,10 +133,10 @@ export class Scene {
       const y = Math.floor(i / N) * S + S / 2;
       g.save();
       g.translate(x, y);
-      if (i % 3 === 0) g.scale(-1, 1); // mirrored glyphs, classic rain look
       g.fillText(chars[i % chars.length], 0, 0);
       g.restore();
     }
+    if (this.atlas) { this.atlas.image = c; this.atlas.needsUpdate = true; return; }
     this.atlas = new THREE.CanvasTexture(c);
     this.atlas.minFilter = THREE.LinearFilter;
     this.atlas.generateMipmaps = false;
