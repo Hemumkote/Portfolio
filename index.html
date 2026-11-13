@@ -9,7 +9,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23020403'/><text x='4' y='23' font-family='monospace' font-size='18' fill='%2300ff9c'>&gt;_</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Share+Tech+Mono&family=Noto+Sans+Devanagari:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&family=Anton&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Share+Tech+Mono&family=Noto+Sans+Devanagari:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Architects+Daughter&family=Pixelify+Sans:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
   </head>
   <body>
     <!-- BOOT SEQUENCE -->
@@ -26,19 +26,22 @@
     <header class="hud-top">
       <a href="#hero" class="k-brand" aria-label="home"><kbd class="cap xs">H</kbd><kbd class="cap xs">M</kbd><span>hemantha</span></a>
       <a href="#hero" class="g-brand" aria-label="home"><b data-text="H/M">H/M</b><span>REALITY v2.8</span></a>
+      <a href="#hero" class="b-brand" aria-label="home"><b>H.M.M</b><span>DWG HM-001 · REV C</span></a>
       <a href="#hero" class="prompt"><span class="u">hemantha</span>@<span class="h">portfolio</span>:<span class="p" id="hud-path">~</span>$<span class="blink">_</span></a>
       <nav id="nav">
-        <a href="#about" data-idx="01"><span class="h-l">whoami</span><span class="k-l">About</span><span class="g-l">About</span></a>
-        <a href="#skills" data-idx="02"><span class="h-l">stack</span><span class="k-l">Stack</span><span class="g-l">Stack</span></a>
-        <a href="#experience" data-idx="03"><span class="h-l">log</span><span class="k-l">Experience</span><span class="g-l">Tapes</span></a>
-        <a href="#projects" data-idx="04"><span class="h-l">projects</span><span class="k-l">Projects</span><span class="g-l">Builds</span></a>
-        <a href="#education" data-idx="05"><span class="h-l">edu</span><span class="k-l">Education</span><span class="g-l">Training</span></a>
-        <a href="#contact" data-idx="06"><span class="h-l">ssh</span><span class="k-l">Contact</span><span class="g-l">Signal</span></a>
+        <a href="#about" data-idx="01"><span class="h-l">whoami</span><span class="k-l">About</span><span class="g-l">About</span><span class="b-l">Spec</span></a>
+        <a href="#skills" data-idx="02"><span class="h-l">stack</span><span class="k-l">Stack</span><span class="g-l">Stack</span><span class="b-l">BOM</span></a>
+        <a href="#experience" data-idx="03"><span class="h-l">log</span><span class="k-l">Experience</span><span class="g-l">Tapes</span><span class="b-l">Revisions</span></a>
+        <a href="#projects" data-idx="04"><span class="h-l">projects</span><span class="k-l">Projects</span><span class="g-l">Builds</span><span class="b-l">Details</span></a>
+        <a href="#education" data-idx="05"><span class="h-l">edu</span><span class="k-l">Education</span><span class="g-l">Training</span><span class="b-l">Certs</span></a>
+        <a href="#contact" data-idx="06"><span class="h-l">ssh</span><span class="k-l">Contact</span><span class="g-l">Signal</span><span class="b-l">Approvals</span></a>
       </nav>
       <div id="mode-switch" role="group" aria-label="background theme">
         <button type="button" data-mode="hacker" aria-pressed="true" title="terminal theme"><span class="ico">&gt;_</span><span class="lbl">term</span></button>
         <button type="button" data-mode="glitch" aria-pressed="false" title="glitch theme"><svg class="ico" viewBox="0 0 24 16" width="18" height="12" aria-hidden="true"><path d="M2 2h9v5H2zM13 2h9v3h-9zM6 9h16v5H6zM2 11h2v3H2z" fill="currentColor"/></svg><span class="lbl">glitch</span></button>
         <button type="button" data-mode="keys" aria-pressed="false" title="keyboard theme"><svg class="ico" viewBox="0 0 24 16" width="18" height="12" aria-hidden="true"><rect x="1" y="1" width="22" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 5h1.5M9 5h1.5M13 5h1.5M17 5h2M5 8.5h1.5M9 8.5h1.5M13 8.5h1.5M17 8.5h2M7 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="lbl">keys</span></button>
+        <button type="button" data-mode="blueprint" aria-pressed="false" title="blueprint theme"><svg class="ico" viewBox="0 0 24 16" width="18" height="12" aria-hidden="true"><path d="M12 1.5 6 14.5M12 1.5l6 13M8.2 10h7.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="1.8" r="1.4" fill="currentColor"/></svg><span class="lbl">blueprint</span></button>
+        <button type="button" data-mode="os" aria-pressed="false" title="desktop theme"><svg class="ico" viewBox="0 0 24 16" width="18" height="12" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="13" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 5h21" stroke="currentColor" stroke-width="2"/></svg><span class="lbl">os</span></button>
       </div>
       <button id="theme-btn" title="cycle colors" aria-label="cycle color palette">◐</button>
     </header>
@@ -61,6 +64,12 @@
     <main id="content"></main>
     <main id="kcontent" hidden></main>
     <main id="gcontent" hidden></main>
+    <main id="bcontent" hidden></main>
+    <main id="ocontent" hidden></main>
+    <div id="b-cross" aria-hidden="true"><i class="h"></i><i class="v"></i><span id="b-xy"></span></div>
+    <div class="b-rule x" aria-hidden="true"></div>
+    <div class="b-rule y" aria-hidden="true"></div>
+    <div id="b-hud" aria-hidden="true"><span>SHEET <b id="b-sheet">00</b> / 06</span><span id="b-name">GENERAL ARRANGEMENT</span><span id="b-pos">X 0.0  Y 0.0</span><span>SCALE 1:1</span></div>
     <div id="g-osd" aria-hidden="true">
       <div class="osd-l"><b>▶ PLAY</b><span id="g-ch">CH-00</span></div>
       <div class="osd-r"><span id="g-tc">00:00:00:00</span><span>SP</span></div>

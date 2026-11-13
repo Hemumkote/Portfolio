@@ -2,6 +2,9 @@ import './style.css';
 import { renderContent } from './render.js';
 import { renderKeys } from './render-keys.js';
 import { renderGlitch } from './render-glitch.js';
+import { renderBlueprint } from './render-blueprint.js';
+import { renderOS } from './render-os.js';
+import { initOS } from './os.js';
 import { initText, decode } from './text.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { techInfo } from './keyboard.js';
@@ -20,11 +23,14 @@ window.scrollTo(0, 0);
 renderContent($('#content'));
 renderKeys($('#kcontent'), { touch: isTouch });
 renderGlitch($('#gcontent'), { touch: isTouch });
+renderBlueprint($('#bcontent'), { touch: isTouch });
+renderOS($('#ocontent'), { touch: isTouch });
 
 // Each theme is a complete, separate frontend. Pick the saved one before anything renders.
-const MODES = ['hacker', 'keys', 'glitch'];
-const MAINS = { hacker: '#content', keys: '#kcontent', glitch: '#gcontent' };
-const PREFIX = { hacker: '', keys: 'k-', glitch: 'g-' }; // section id prefix per frontend
+const MODES = ['hacker', 'keys', 'glitch', 'blueprint', 'os'];
+const MAINS = { hacker: '#content', keys: '#kcontent', glitch: '#gcontent', blueprint: '#bcontent', os: '#ocontent' };
+const PREFIX = { hacker: '', keys: 'k-', glitch: 'g-', blueprint: 'b-', os: 'o-' }; // section id prefix per frontend
+const stripPrefix = (id) => id.replace(/^[kgbo]-/, '');
 let mode = (() => { try { const m = localStorage.getItem('mode'); return MODES.includes(m) ? m : 'hacker'; } catch { return 'hacker'; } })();
 const showMain = (m) => MODES.forEach((x) => ($(MAINS[x]).hidden = x !== m));
 document.body.dataset.mode = mode;
@@ -56,15 +62,32 @@ const GLITCH_THEMES = [
   { name: 'acid', a: '#b6ff00', b: '#8a2bff' },
   { name: 'mono', a: '#ffffff', b: '#7a7a7a' },
 ];
-const PALETTES = { hacker: THEMES, keys: KEY_THEMES, glitch: GLITCH_THEMES };
-const STORE_KEY = { hacker: 'theme', keys: 'ktheme', glitch: 'gtheme' };
-const themeIdx = { hacker: 0, keys: 0, glitch: 0 };
+const BP_THEMES = [
+  { name: 'cyanotype', paper: '#0f3d73', ink: '#e8f1ff', a: '#ffd166', b: '#8fdcff' },
+  { name: 'whiteprint', paper: '#f2eee3', ink: '#1c3f7a', a: '#d9472b', b: '#2a7de1' },
+  { name: 'midnight', paper: '#0b1a33', ink: '#cfe0ff', a: '#ff8a5b', b: '#5ee6c8' },
+  { name: 'graphite', paper: '#1d1f22', ink: '#ecebe6', a: '#f2c14e', b: '#8ec5ff' },
+];
+const OS_THEMES = [
+  { name: 'classic', a: '#1d3fbb', b: '#4f7cff', desk: '#0f8f8a' },
+  { name: 'plum', a: '#6b2fa0', b: '#c06cf0', desk: '#3a2f6b' },
+  { name: 'forest', a: '#1f6b3a', b: '#4fbf72', desk: '#5b7f4a' },
+  { name: 'sunset', a: '#b8322a', b: '#ff8a3d', desk: '#c9773a' },
+];
+const PALETTES = { hacker: THEMES, keys: KEY_THEMES, glitch: GLITCH_THEMES, blueprint: BP_THEMES, os: OS_THEMES };
+const STORE_KEY = { hacker: 'theme', keys: 'ktheme', glitch: 'gtheme', blueprint: 'btheme', os: 'otheme' };
+const themeIdx = { hacker: 0, keys: 0, glitch: 0, blueprint: 0, os: 0 };
 function paintVars(m) {
   const t = PALETTES[m][themeIdx[m]];
   const st = document.documentElement.style;
-  const [va, vb] = { hacker: ['--acc', '--acc2'], keys: ['--k-acc', '--k-acc2'], glitch: ['--g-a', '--g-b'] }[m];
-  st.setProperty(va, t.a);
-  st.setProperty(vb, t.b);
+  const vars = {
+    hacker: { '--acc': t.a, '--acc2': t.b },
+    keys: { '--k-acc': t.a, '--k-acc2': t.b },
+    glitch: { '--g-a': t.a, '--g-b': t.b },
+    blueprint: { '--bp-paper': t.paper, '--bp-ink': t.ink, '--bp-a': t.a, '--bp-b': t.b },
+    os: { '--o-a': t.a, '--o-b': t.b, '--o-desk': t.desk },
+  }[m];
+  for (const k in vars) st.setProperty(k, vars[k]);
   return t;
 }
 function applyTheme(i) {
@@ -85,15 +108,32 @@ for (const m of MODES) {
 $('#theme-btn').addEventListener('click', () => applyTheme(themeIdx[mode] + 1));
 
 /* ------------------------------------------------------------------ */
+/* HM/OS: a desktop where each section is a window                     */
+/* ------------------------------------------------------------------ */
+const os = initOS($('#ocontent'), {
+  onFocus: (i) => scene?.dw?.focus(i),
+  onExit: () => applyMode('hacker'),
+  onSaver: (on) => scene?.dw?.setSaver(on),
+});
+// the theme switch + palette button live in the header, or in the taskbar tray on the desktop
+const hudTop = $('.hud-top');
+function placeControls(m) {
+  const host = m === 'os' ? os.tray : hudTop;
+  if ($('#mode-switch').parentElement !== host) host.append($('#mode-switch'), $('#theme-btn'));
+}
+
+/* ------------------------------------------------------------------ */
 /* Mode: hacker ⇄ glitch ⇄ keyboard (three separate frontends)        */
 /* ------------------------------------------------------------------ */
 function applyMode(m) {
   if (!MODES.includes(m)) return null;
   const changed = m !== mode;
   const idx = Math.max(0, activeIdx);
+  if (mode === 'os' && m !== 'os') os.deactivate();
   mode = m;
   document.body.dataset.mode = m;
   showMain(m);
+  placeControls(m);
   scene?.setMode(m);
   scene?.setTheme(PALETTES[m][themeIdx[m]]);
   $$('#mode-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
@@ -103,7 +143,11 @@ function applyMode(m) {
   sections = $$('main:not([hidden]) section');
   measure();
   activeIdx = -1;
-  if (changed && sections[idx]) window.scrollTo({ top: idx === 0 ? 0 : sections[idx].offsetTop, behavior: 'instant' });
+  if (m === 'os') {
+    // the desktop never scrolls: open the window for the section we were on
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    os.activate(idx);
+  } else if (changed && sections[idx]) window.scrollTo({ top: idx === 0 ? 0 : sections[idx].offsetTop, behavior: 'instant' });
   ScrollTrigger.refresh();
   return m;
 }
@@ -113,19 +157,20 @@ $$('#mode-switch button').forEach((b) => b.addEventListener('click', () => apply
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
   if (!a) return;
-  const id = PREFIX[mode] + a.getAttribute('href').slice(1).replace(/^[kg]-/, '');
+  const id = PREFIX[mode] + stripPrefix(a.getAttribute('href').slice(1));
   const el = document.getElementById(id);
   if (!el) return;
   e.preventDefault();
-  el.scrollIntoView({ behavior: 'smooth' });
+  if (mode === 'os') os.open(id);
+  else el.scrollIntoView({ behavior: 'smooth' });
 });
 
 // keys + glitch frontends: blocks rise in when they enter the viewport
 const riseIO = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (e.isIntersecting) { e.target.classList.add('in'); riseIO.unobserve(e.target); }
 }), { threshold: 0.12 });
-$$('#kcontent .k-rise, #gcontent .g-rise').forEach((el) => {
-  const cls = el.classList.contains('k-rise') ? 'k-rise' : 'g-rise';
+$$('#kcontent .k-rise, #gcontent .g-rise, #bcontent .b-rise').forEach((el) => {
+  const cls = ['k-rise', 'g-rise', 'b-rise'].find((c) => el.classList.contains(c));
   const sib = [...el.parentElement.children].filter((c) => c.classList.contains(cls));
   el.style.setProperty('--d', `${sib.indexOf(el) * 70}ms`);
   riseIO.observe(el);
@@ -254,7 +299,7 @@ function onScrollFrame() {
   const y = scrollY;
   vel += ((y - lastY) * 60 - vel) * 0.2;
   lastY = y;
-  const s = sectionFloat(y);
+  const s = mode === 'os' ? os.current() : sectionFloat(y);
   if (scene) {
     scene.section = s;
     scene.velocity = vel;
@@ -269,8 +314,10 @@ function onScrollFrame() {
     nameEl.dataset.final = sec.dataset.name;
     decode(nameEl);
     $('#hud-path').textContent = sec.dataset.path;
-    navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${sec.id.replace(/^[kg]-/, '')}`));
+    navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${stripPrefix(sec.id)}`));
     $('#g-ch').textContent = `CH-${String(idx).padStart(2, '0')}`;
+    $('#b-sheet').textContent = String(idx).padStart(2, '0');
+    $('#b-name').textContent = sec.dataset.name;
   }
   const max = document.documentElement.scrollHeight - innerHeight;
   const pct = max > 0 ? y / max : 0;
@@ -290,12 +337,23 @@ window.addEventListener('pointermove', (e) => {
   scene?.setPointer(e.clientX, e.clientY);
   $('#hud-x').textContent = String(Math.round(e.clientX)).padStart(4, '0');
   $('#hud-y').textContent = String(Math.round(e.clientY)).padStart(4, '0');
+  if (mode === 'blueprint') bpCursor(e.clientX, e.clientY);
 });
+// blueprint: drafting-machine crosshair + paper coordinates in mm from the top-left
+const bpCross = { h: $('#b-cross .h'), v: $('#b-cross .v'), xy: $('#b-xy'), hud: $('#b-pos') };
+function bpCursor(x, y) {
+  bpCross.h.style.transform = `translateY(${y}px)`;
+  bpCross.v.style.transform = `translateX(${x}px)`;
+  const label = `X ${(x / 3.78).toFixed(1)}  Y ${(y / 3.78).toFixed(1)}`;
+  bpCross.xy.textContent = label;
+  bpCross.xy.style.transform = `translate(${Math.min(x + 12, innerWidth - 150)}px, ${Math.max(y - 26, 60)}px)`;
+  bpCross.hud.textContent = label;
+}
 document.addEventListener('pointerover', (e) => {
-  if (scene) scene.blockHover = !!e.target.closest('.panel, .k-card, .cap, .g-block, a, button, input, .hud-top');
+  if (scene) scene.blockHover = !!e.target.closest('.panel, .k-card, .cap, .g-block, .b-sheet, .b-head, .b-hero-inner, .b-contact > div, .b-titleblock, a, button, input, .hud-top');
   cursor.classList.toggle('link', !!e.target.closest('a, button, input, [data-magnetic], .project'));
 });
-const UI = 'a, button, input, .term-live, .panel, .k-card, .cap, .g-block, .hud-top, #key-card';
+const UI = 'a, button, input, .term-live, .panel, .k-card, .cap, .g-block, .b-sheet, .b-head, .b-hero-inner, .b-contact > div, .b-titleblock, .hud-top, #key-card';
 window.addEventListener('pointerdown', (e) => {
   if (mode !== 'hacker' || e.target.closest('a, button, input, .term-live')) return;
   if (scene?.click()) cursor.classList.add('fire');
@@ -303,8 +361,12 @@ window.addEventListener('pointerdown', (e) => {
 });
 // keys mode uses `click`, so a finger scrolling the page never presses keys
 window.addEventListener('click', (e) => {
-  if (mode === 'hacker' || !scene || e.target.closest(UI)) return;
+  if (mode === 'hacker' || mode === 'os' || !scene || e.target.closest(UI)) return;
   scene.setPointer(e.clientX, e.clientY);
+  if (mode === 'blueprint') {
+    scene.click(); // the nearest free pen draws a detail callout here
+    return;
+  }
   if (mode === 'glitch') {
     // corrupt reality: 3D monolith explodes + the page itself tears for a moment
     scene.click();
@@ -361,7 +423,7 @@ $$('.skill-group').forEach((el) => barIO.observe(el));
 let overdrive = false;
 const term = initTerminal({
   onTheme: (name) => {
-    if (!name) return applyTheme(themeIdx + 1);
+    if (!name) return applyTheme(themeIdx[mode] + 1);
     const i = THEMES.findIndex((t) => t.name === name.toLowerCase());
     return i < 0 ? null : applyTheme(i);
   },
@@ -374,7 +436,7 @@ const term = initTerminal({
   onMode: (m) => {
     if (!m) return applyMode(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
     m = m.toLowerCase();
-    return applyMode({ term: 'hacker', terminal: 'hacker', hacker: 'hacker', keys: 'keys', keyboard: 'keys', kb: 'keys', glitch: 'glitch' }[m] || m);
+    return applyMode({ term: 'hacker', terminal: 'hacker', hacker: 'hacker', keys: 'keys', keyboard: 'keys', kb: 'keys', glitch: 'glitch', blueprint: 'blueprint', bp: 'blueprint', os: 'os', desktop: 'os' }[m] || m);
   },
 });
 window.addEventListener('keydown', (e) => {

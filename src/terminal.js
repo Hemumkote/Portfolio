@@ -44,7 +44,7 @@ export function initTerminal({ onTheme, onMatrix, onGlitch, onMode }) {
           ['resume', 'download resume.pdf'],
           ['goto &lt;section&gt;', 'jump to a section'],
           ['theme [name]', 'matrix | cyber | amber | neon'],
-          ['mode [name]', 'term | glitch | keys'],
+          ['mode [name]', 'term | glitch | keys | bp | os'],
           ['matrix', 'toggle overdrive rain'],
           ['clear', 'clear the screen'],
         ].map(([c, d]) => `  <b>${c.padEnd(18, ' ').replace(/ /g, '&nbsp;')}</b><span class="dim">${d}</span>`),

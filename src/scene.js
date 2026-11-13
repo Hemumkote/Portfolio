@@ -8,6 +8,8 @@ import { SKILL_CLOUD } from './data.js';
 import { GLYPHS } from './text.js';
 import { KeyboardWorld, DESK } from './keyboard.js';
 import { GlitchWorld, VOID } from './glitch.js';
+import { BlueprintWorld } from './blueprint.js';
+import { DesktopWorld } from './desktop.js';
 
 /* ------------------------------------------------------------------ */
 /* GLSL helpers                                                        */
@@ -86,6 +88,9 @@ export class Scene {
     this.mode = 'hacker'; // 'hacker' | 'keys'
     this.kb = null; // keyboard world, built lazily on first switch
     this.gw = null; // glitch world, built lazily on first switch
+    this.bw = null; // blueprint world
+    this.dw = null; // desktop (HM/OS) world
+    this.theme = null;
     this.isMobile = window.innerWidth < 820;
     this.colorA = new THREE.Color(THEMES[0].a);
     this.colorB = new THREE.Color(THEMES[0].b);
@@ -481,27 +486,38 @@ export class Scene {
     this.dust.material.color.copy(this.colorB);
     this.shock.material.color.copy(this.colorA);
     this.labelItems.forEach((l) => l.s.material.color.copy(this.colorA));
+    this.theme = t;
     this.kb?.onTheme();
     this.gw?.onTheme();
+    if (this.mode === 'blueprint') this.bw?.onTheme(t);
+    if (this.mode === 'os') this.dw?.onTheme(t);
     this.kick(0.8);
   }
 
   setMode(mode) {
-    this.mode = ['keys', 'glitch'].includes(mode) ? mode : 'hacker';
+    this.mode = ['keys', 'glitch', 'blueprint', 'os'].includes(mode) ? mode : 'hacker';
     const keys = this.mode === 'keys';
     const glitch = this.mode === 'glitch';
+    const bp = this.mode === 'blueprint';
+    const os = this.mode === 'os';
     const hacker = this.mode === 'hacker';
     if (keys && !this.kb) this.kb = new KeyboardWorld(this);
     if (glitch && !this.gw) this.gw = new GlitchWorld(this);
+    if (bp && !this.bw) this.bw = new BlueprintWorld(this);
+    if (os && !this.dw) this.dw = new DesktopWorld(this);
     this.kb?.setVisible(keys);
     this.gw?.setVisible(glitch);
+    this.bw?.setVisible(bp);
+    this.dw?.setVisible(os);
+    // the desktop wallpaper renders at a quarter of the pixels, for chunky retro 3D
+    this.renderer.setPixelRatio(os ? 0.5 : this.dpr);
     // every theme is its own world: nothing from the hacker scene stays visible elsewhere
     for (const o of [this.core, this.rain, this.shock, this.ceil, this.floor, this.dust]) o.visible = hacker;
     for (const c of ['core-hover', 'key-hover', 'g-hover']) document.body.classList.remove(c);
     const bg = keys ? DESK : glitch ? VOID : 0x020403;
     this.renderer.setClearColor(bg, 1);
     this.scene.fog.color.set(bg);
-    this.scene.fog.density = keys ? 0.018 : glitch ? 0.03 : 0.045;
+    this.scene.fog.density = keys ? 0.018 : glitch ? 0.03 : bp ? 0 : os ? 0.02 : 0.045;
     if (hacker) this.kick(1.3);
   }
 
@@ -519,6 +535,11 @@ export class Scene {
   click() {
     if (this.mode === 'keys') return this.kb.click();
     if (this.mode === 'glitch') { this.gw.burst(); return true; }
+    if (this.mode === 'blueprint') {
+      this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+      return this.bw.click();
+    }
+    if (this.mode === 'os') return false;
     if (this.hover < 0.5) return false;
     this.pulse = 1;
     this.kick(1);
@@ -542,7 +563,7 @@ export class Scene {
 
   setQuality(dpr) {
     this.dpr = dpr;
-    this.renderer.setPixelRatio(dpr);
+    this.renderer.setPixelRatio(this.mode === 'os' ? 0.5 : dpr);
     this.composer.setPixelRatio(dpr);
     this.gw?.setPixelRatio(dpr);
     this.coreUniforms.uPR.value = dpr;
@@ -583,6 +604,22 @@ export class Scene {
       kbShot.cam.y += this.mouseSmooth.y * 0.5;
       cam.copy(kbShot.cam);
       look.copy(kbShot.look);
+    }
+    if (this.mode === 'blueprint' || this.mode === 'os') {
+      const bp = this.mode === 'blueprint';
+      const shot = bp ? this.bw.shot(s, this.isMobile) : this.dw.shot(this.isMobile);
+      shot.cam.x += this.mouseSmooth.x * (bp ? 0.9 : 0.6);
+      shot.cam.y += this.mouseSmooth.y * (bp ? 0.6 : 0.4);
+      this.camera.position.lerp(shot.cam, bp ? 0.06 : 0.05);
+      this.lookAt.lerp(shot.look, bp ? 0.06 : 0.05);
+      this.camera.lookAt(this.lookAt);
+      this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+      if (bp) this.bw.update(dt, shot, !this.blockHover);
+      else this.dw.update(dt);
+      this.hover = 0;
+      this.glitch = 0;
+      this.renderer.render(this.scene, this.camera);
+      return;
     }
     let gShot = null;
     if (this.mode === 'glitch') {
