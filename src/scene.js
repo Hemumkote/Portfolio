@@ -495,7 +495,7 @@ export class Scene {
   }
 
   setMode(mode) {
-    this.mode = ['keys', 'glitch', 'blueprint', 'os'].includes(mode) ? mode : 'hacker';
+    this.mode = ['keys', 'glitch', 'blueprint', 'os', 'notebook'].includes(mode) ? mode : 'hacker';
     const keys = this.mode === 'keys';
     const glitch = this.mode === 'glitch';
     const bp = this.mode === 'blueprint';
@@ -596,6 +596,9 @@ export class Scene {
     this.mouseSmooth.lerp(this.mouse, 0.05);
     cam.x += this.mouseSmooth.x * 0.45;
     cam.y += this.mouseSmooth.y * 0.3;
+
+    // the notebook is plain paper: no 3D at all, so don't spend a frame on it
+    if (this.mode === 'notebook') return;
 
     let kbShot = null;
     if (this.mode === 'keys') {

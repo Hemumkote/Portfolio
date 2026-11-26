@@ -4,6 +4,7 @@ import { renderKeys } from './render-keys.js';
 import { renderGlitch } from './render-glitch.js';
 import { renderBlueprint } from './render-blueprint.js';
 import { renderOS } from './render-os.js';
+import { renderNotebook } from './render-notebook.js';
 import { initOS } from './os.js';
 import { initText, decode } from './text.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -25,12 +26,13 @@ renderKeys($('#kcontent'), { touch: isTouch });
 renderGlitch($('#gcontent'), { touch: isTouch });
 renderBlueprint($('#bcontent'), { touch: isTouch });
 renderOS($('#ocontent'), { touch: isTouch });
+renderNotebook($('#ncontent'), { touch: isTouch });
 
 // Each theme is a complete, separate frontend. Pick the saved one before anything renders.
-const MODES = ['hacker', 'keys', 'glitch', 'blueprint', 'os'];
-const MAINS = { hacker: '#content', keys: '#kcontent', glitch: '#gcontent', blueprint: '#bcontent', os: '#ocontent' };
-const PREFIX = { hacker: '', keys: 'k-', glitch: 'g-', blueprint: 'b-', os: 'o-' }; // section id prefix per frontend
-const stripPrefix = (id) => id.replace(/^[kgbo]-/, '');
+const MODES = ['hacker', 'keys', 'glitch', 'blueprint', 'os', 'notebook'];
+const MAINS = { hacker: '#content', keys: '#kcontent', glitch: '#gcontent', blueprint: '#bcontent', os: '#ocontent', notebook: '#ncontent' };
+const PREFIX = { hacker: '', keys: 'k-', glitch: 'g-', blueprint: 'b-', os: 'o-', notebook: 'n-' }; // section id prefix per frontend
+const stripPrefix = (id) => id.replace(/^[kgbon]-/, '');
 let mode = (() => { try { const m = localStorage.getItem('mode'); return MODES.includes(m) ? m : 'hacker'; } catch { return 'hacker'; } })();
 const showMain = (m) => MODES.forEach((x) => ($(MAINS[x]).hidden = x !== m));
 document.body.dataset.mode = mode;
@@ -74,9 +76,16 @@ const OS_THEMES = [
   { name: 'forest', a: '#1f6b3a', b: '#4fbf72', desk: '#5b7f4a' },
   { name: 'sunset', a: '#b8322a', b: '#ff8a3d', desk: '#c9773a' },
 ];
-const PALETTES = { hacker: THEMES, keys: KEY_THEMES, glitch: GLITCH_THEMES, blueprint: BP_THEMES, os: OS_THEMES };
-const STORE_KEY = { hacker: 'theme', keys: 'ktheme', glitch: 'gtheme', blueprint: 'btheme', os: 'otheme' };
-const themeIdx = { hacker: 0, keys: 0, glitch: 0, blueprint: 0, os: 0 };
+// notebook: paper + pen colours (a/b are what the 3D scene reads; the notebook has no 3D)
+const NB_THEMES = [
+  { name: 'graph', paper: '#f4f3ee', grid: '#d6d8dc', ink: '#1f2f8f', pen: '#1d1d1f', red: '#d43b3b', green: '#2f8a4e', a: '#1f2f8f', b: '#d43b3b' },
+  { name: 'black-ink', paper: '#f7f6f1', grid: '#dcdcd6', ink: '#1d1d1f', pen: '#1d1d1f', red: '#c2362b', green: '#2a7a46', a: '#1d1d1f', b: '#c2362b' },
+  { name: 'kraft', paper: '#e8dcc2', grid: '#cdbd9c', ink: '#2c3e7a', pen: '#2b2118', red: '#b8382c', green: '#3c7a3a', a: '#2c3e7a', b: '#b8382c' },
+  { name: 'chalk', paper: '#22262b', grid: '#363b42', ink: '#cdd8ff', pen: '#e9e9e4', red: '#ff7b72', green: '#7bdc9a', a: '#cdd8ff', b: '#ff7b72' },
+];
+const PALETTES = { hacker: THEMES, keys: KEY_THEMES, glitch: GLITCH_THEMES, blueprint: BP_THEMES, os: OS_THEMES, notebook: NB_THEMES };
+const STORE_KEY = { hacker: 'theme', keys: 'ktheme', glitch: 'gtheme', blueprint: 'btheme', os: 'otheme', notebook: 'ntheme' };
+const themeIdx = { hacker: 0, keys: 0, glitch: 0, blueprint: 0, os: 0, notebook: 0 };
 function paintVars(m) {
   const t = PALETTES[m][themeIdx[m]];
   const st = document.documentElement.style;
@@ -86,6 +95,7 @@ function paintVars(m) {
     glitch: { '--g-a': t.a, '--g-b': t.b },
     blueprint: { '--bp-paper': t.paper, '--bp-ink': t.ink, '--bp-a': t.a, '--bp-b': t.b },
     os: { '--o-a': t.a, '--o-b': t.b, '--o-desk': t.desk },
+    notebook: { '--n-paper': t.paper, '--n-grid': t.grid, '--n-ink': t.ink, '--n-pen': t.pen, '--n-red': t.red, '--n-green': t.green },
   }[m];
   for (const k in vars) st.setProperty(k, vars[k]);
   return t;
@@ -169,8 +179,8 @@ document.addEventListener('click', (e) => {
 const riseIO = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (e.isIntersecting) { e.target.classList.add('in'); riseIO.unobserve(e.target); }
 }), { threshold: 0.12 });
-$$('#kcontent .k-rise, #gcontent .g-rise, #bcontent .b-rise').forEach((el) => {
-  const cls = ['k-rise', 'g-rise', 'b-rise'].find((c) => el.classList.contains(c));
+$$('#kcontent .k-rise, #gcontent .g-rise, #bcontent .b-rise, #ncontent .n-rise').forEach((el) => {
+  const cls = ['k-rise', 'g-rise', 'b-rise', 'n-rise'].find((c) => el.classList.contains(c));
   const sib = [...el.parentElement.children].filter((c) => c.classList.contains(cls));
   el.style.setProperty('--d', `${sib.indexOf(el) * 70}ms`);
   riseIO.observe(el);
@@ -318,6 +328,7 @@ function onScrollFrame() {
     $('#g-ch').textContent = `CH-${String(idx).padStart(2, '0')}`;
     $('#b-sheet').textContent = String(idx).padStart(2, '0');
     $('#b-name').textContent = sec.dataset.name;
+    $('#n-pg').textContent = String(idx).padStart(2, '0');
   }
   const max = document.documentElement.scrollHeight - innerHeight;
   const pct = max > 0 ? y / max : 0;
@@ -361,7 +372,7 @@ window.addEventListener('pointerdown', (e) => {
 });
 // keys mode uses `click`, so a finger scrolling the page never presses keys
 window.addEventListener('click', (e) => {
-  if (mode === 'hacker' || mode === 'os' || !scene || e.target.closest(UI)) return;
+  if (mode === 'hacker' || mode === 'os' || mode === 'notebook' || !scene || e.target.closest(UI)) return;
   scene.setPointer(e.clientX, e.clientY);
   if (mode === 'blueprint') {
     scene.click(); // the nearest free pen draws a detail callout here
@@ -436,7 +447,7 @@ const term = initTerminal({
   onMode: (m) => {
     if (!m) return applyMode(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
     m = m.toLowerCase();
-    return applyMode({ term: 'hacker', terminal: 'hacker', hacker: 'hacker', keys: 'keys', keyboard: 'keys', kb: 'keys', glitch: 'glitch', blueprint: 'blueprint', bp: 'blueprint', os: 'os', desktop: 'os' }[m] || m);
+    return applyMode({ term: 'hacker', terminal: 'hacker', hacker: 'hacker', keys: 'keys', keyboard: 'keys', kb: 'keys', glitch: 'glitch', blueprint: 'blueprint', bp: 'blueprint', os: 'os', desktop: 'os', notebook: 'notebook', notes: 'notebook', journal: 'notebook', paper: 'notebook' }[m] || m);
   },
 });
 window.addEventListener('keydown', (e) => {
